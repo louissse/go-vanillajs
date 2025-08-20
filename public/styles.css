@@ -13,6 +13,57 @@
     navigation: auto;
 }
 
+/* View Transition Styles for Movie Scaling Effect */
+::view-transition-old(page-old) {
+    animation: fade-out 0.4s ease-out;
+}
+
+::view-transition-new(page-new) {
+    animation: scale-in 0.4s ease-out;
+}
+
+/* Movie-specific transitions for smooth scaling */
+::view-transition-old(movie) {
+    animation: movie-scale-out 0.5s ease-out;
+}
+
+::view-transition-new(movie) {
+    animation: movie-scale-in 0.5s ease-out;
+}
+
+@keyframes fade-out {
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@keyframes scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes movie-scale-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes movie-scale-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
