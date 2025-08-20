@@ -71,7 +71,7 @@ func (h *MovieHandler) GetRandomMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MovieHandler) SearchMovies(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("q")
+	query := r.URL.Query().Get("query")
 	order := r.URL.Query().Get("order")
 	genreStr := r.URL.Query().Get("genre")
 

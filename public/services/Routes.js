@@ -1,9 +1,9 @@
 import { HomePage } from "../components/HomePage.js";
 import { MovieDetailsPage } from "../components/MovieDetailsPage.js";
-import { MoviePage } from "../components/MoviePage.js";
+import { MoviesPage } from "../components/MoviesPage.js";
 
 export const routes = [
     { path: '/', component: HomePage },
     { path: /\/movies\/(\d+)/, component: MovieDetailsPage },
-    { path: '/movies', component: MoviePage }, //search results or movie list
+    { path: '/movies', component: MoviesPage }, //search results or movie list
 ];

@@ -18,6 +18,9 @@ export const Router = {
     go: (route, addToHistory=true) => {
         if (addToHistory) {
             history.pushState(null, "", route);
+        } else {
+            // Update URL without adding to history (replace current entry)
+            history.replaceState(null, "", route);
         }
         const routePath = route.includes('?') ? route.split('?')[0] : route;
         let pageElement = null;

@@ -23,9 +23,21 @@ window.app = {
     },
     search: function(event) {
         event.preventDefault();
-        const query = document.querySelector('input[type="search"]').value;
-        console.log("Searching for:", query);
-        // TODO: Implement search functionality
-    }, 
+        const q = document.querySelector('input[type="search"]').value;
+        console.log("Searching for:", q);
+        app.Router.go("/movies?q=" + q);
+    },
+    searchOrderChange: (order) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const q = urlParams.get("q");
+        const genre = urlParams.get("genre") ?? "";
+        app.Router.go(`/movies?q=${q}&order=${order}&genre=${genre}`, false);
+    },
+    searchFilterChange: (genre) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const q = urlParams.get("q");
+        const order = urlParams.get("order") ?? "";
+        app.Router.go(`/movies?q=${q}&order=${order}&genre=${genre}`, false);
+    },
     api: API
 }
