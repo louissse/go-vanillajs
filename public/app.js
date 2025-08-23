@@ -24,7 +24,7 @@ window.app = {
     search: function(event) {
         event.preventDefault();
         const q = document.querySelector('input[type="search"]').value;
-        console.log("Searching for:", q);
+        console.log("Searching for:", q);  
         app.Router.go("/movies?q=" + q);
     },
     searchOrderChange: (order) => {

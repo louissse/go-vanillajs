@@ -1,1 +1,14 @@
 /.DS_Store
+/node_modules
+/.vscode
+/.idea
+/dist
+/env
+*.log
+*.env
+*.exe
+*.out
+*.test
+*.exe~
+*.swp
+*~  

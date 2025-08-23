@@ -50,8 +50,17 @@ func main() {
 		log.Fatalf("Failed to initialized repository: %v", err)
 	}
 
+	// Initialize Account Repository
+	accountRepo, err := data.NewAccountRepository(db, logInstance)
+	if err != nil {
+		log.Fatalf("Failed to initialize account repository: %v", err)
+	}
+
 	// Movie handler initialization
 	movieHandler := handlers.NewMovieHandler(movieRepo, logInstance)
+
+	// Account handler initialization
+	accountHandler := handlers.NewAccountHandler(accountRepo, logInstance)
 
 	// Handler for getting movies
 	http.HandleFunc("/api/movies/top/", movieHandler.GetTopMovies)
@@ -59,6 +68,9 @@ func main() {
 	http.HandleFunc("/api/movies/search/", movieHandler.SearchMovies)
 	http.HandleFunc("/api/movies/", movieHandler.GetMovie) // api/movies/{id}
 	http.HandleFunc("/api/genres/", movieHandler.GetGenres)
+	// Handlers for account management
+	http.HandleFunc("/api/account/register/", accountHandler.Register)
+	http.HandleFunc("/api/account/login/", accountHandler.Authenticate)
 
 	catchAllClientRoutesHandler := func(w http.ResponseWriter, r *http.Request) {
 		// 1) HTTP Redirect 301/302 (Not the right way)
