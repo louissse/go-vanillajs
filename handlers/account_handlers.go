@@ -1,11 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"frontendmasters.com/reelingit/data"
 	"frontendmasters.com/reelingit/logger"
+	"frontendmasters.com/reelingit/models"
+	"frontendmasters.com/reelingit/token"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Define request structure
@@ -24,6 +29,7 @@ type AuthRequest struct {
 type AuthResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+	JWT		string `json:"jwt"`
 }
 
 type AccountHandler struct {
@@ -82,6 +88,7 @@ func (h *AccountHandler) Register(w http.ResponseWriter, r *http.Request) {
 	response := AuthResponse{
 		Success: success,
 		Message: "User registered successfully",
+		JWT: token.CreateJWT(models.User{Email: req.Email, Name: req.Name}, *h.logger),
 	}
 
 	if err := h.writeJSONResponse(w, response); err == nil {
@@ -108,6 +115,7 @@ func (h *AccountHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	response := AuthResponse{
 		Success: success,
 		Message: "User registered successfully",
+		JWT: token.CreateJWT(models.User{Email: req.Email}, *h.logger),
 	}
 
 	if err := h.writeJSONResponse(w, response); err == nil {
@@ -115,6 +123,119 @@ func (h *AccountHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *AccountHandler) SaveToCollection(w http.ResponseWriter, r *http.Request) {
+	type CollectionRequest struct {
+		MovieID    int    `json:"movie_id"`
+		Collection string `json:"collection"`
+	}
+
+	var req CollectionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error("Failed to decode collection request", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	email, ok := r.Context().Value("email").(string)
+	if !ok {
+		http.Error(w, "Unable to retrieve email", http.StatusInternalServerError)
+		return
+	}
+
+	success, err := h.storage.SaveCollection(models.User{Email: email},
+		req.MovieID, req.Collection)
+	if h.handleStorageError(w, err, "Failed to save to collection") {
+		return
+	}
+
+	response := AuthResponse{
+		Success: success,
+		Message: "Movie added to " + req.Collection + " successfully",
+	}
+
+	if err := h.writeJSONResponse(w, response); err == nil {
+		h.logger.Info("Successfully saved movie to " + req.Collection)
+	}
+}
+
+func (h *AccountHandler) GetFavorites(w http.ResponseWriter, r *http.Request) {
+	email, ok := r.Context().Value("email").(string)
+	if !ok {
+		http.Error(w, "Unable to retrieve email", http.StatusInternalServerError)
+		return
+	}
+	details, err := h.storage.GetAccountDetails(email)
+	if err != nil {
+		http.Error(w, "Unable to retrieve collections", http.StatusInternalServerError)
+		return
+	}
+	if err := h.writeJSONResponse(w, details.Favorites); err == nil {
+		h.logger.Info("Successfully sent favorites")
+	}
+}
+
+func (h *AccountHandler) GetWatchlist(w http.ResponseWriter, r *http.Request) {
+	email, ok := r.Context().Value("email").(string)
+	if !ok {
+		http.Error(w, "Unable to retrieve email", http.StatusInternalServerError)
+		return
+	}
+	details, err := h.storage.GetAccountDetails(email)
+	if err != nil {
+		http.Error(w, "Unable to retrieve collections", http.StatusInternalServerError)
+		return
+	}
+	if err := h.writeJSONResponse(w, details.Watchlist); err == nil {
+		h.logger.Info("Successfully sent favorites")
+	}
+}
+
+func (h *AccountHandler) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenStr := r.Header.Get("Authorization")
+		if tokenStr == "" {
+			http.Error(w, "Missing authorization token", http.StatusUnauthorized)
+			return
+		}
+
+		// Remove "Bearer " prefix if present
+		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
+
+		// Parse and validate the token
+
+		token, err := jwt.Parse(tokenStr,
+			func(t *jwt.Token) (interface{}, error) {
+				// Ensure the signing method is HMAC
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, jwt.ErrSignatureInvalid
+				}
+				return []byte(token.GetJWTSecret(*h.logger)), nil
+			},
+		)
+		if err != nil || !token.Valid {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// Extract claims from the token
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+			return
+		}
+
+		// Get the email from claims
+		email, ok := claims["email"].(string)
+		if !ok {
+			http.Error(w, "Email not found in token", http.StatusUnauthorized)
+			return
+		}
+
+		// Inject email into the request context
+		ctx := context.WithValue(r.Context(), "email", email)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
 
 func NewAccountHandler(storage data.AccountStorage, log *logger.Logger) *AccountHandler {
 	return &AccountHandler{

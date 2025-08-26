@@ -24,20 +24,35 @@ export const Router = {
         }
         const routePath = route.includes('?') ? route.split('?')[0] : route;
         let pageElement = null;
+
+        let needsLogin = false;
+
         for (const r of routes) {
             if (typeof r.path === "string" && r.path === routePath) {
                 pageElement = new r.component();
+                needsLogin = r.loggedIn == true;
                 break;
             } else if (r.path instanceof RegExp) {
                 const match = r.path.exec(route);
                 if (match) {
                     const params = match.slice(1);
                     pageElement = new r.component();
-                    pageElement.params = params;                    
+                    pageElement.params = params;
+                    needsLogin = r.loggedIn == true;                    
                     break;
                 }
             }
         }
+
+        if (pageElement){
+            // We have a page element from routes
+            if (needsLogin && app.Store.loggedIn == false){
+                //app.showError("You must be logged in to access this page");
+                Router.go("/account/login");
+                return;
+            }
+        }
+
         if (pageElement==null) {
             pageElement = document.createElement("h1");
             pageElement.textContent = "Page not found";

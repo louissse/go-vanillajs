@@ -72,6 +72,16 @@ func main() {
 	http.HandleFunc("/api/account/register/", accountHandler.Register)
 	http.HandleFunc("/api/account/login/", accountHandler.Authenticate)
 
+	// Protected routes
+	http.Handle("/api/account/favorites/",
+		accountHandler.AuthMiddleware(http.HandlerFunc(accountHandler.GetFavorites)))
+
+	http.Handle("/api/account/watchlist/",
+		accountHandler.AuthMiddleware(http.HandlerFunc(accountHandler.GetWatchlist)))
+
+	http.Handle("/api/account/save-to-collection/",
+		accountHandler.AuthMiddleware(http.HandlerFunc(accountHandler.SaveToCollection)))
+
 	catchAllClientRoutesHandler := func(w http.ResponseWriter, r *http.Request) {
 		// 1) HTTP Redirect 301/302 (Not the right way)
 		// 2) Deliver the index.html file'

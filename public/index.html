@@ -60,8 +60,8 @@
                 <section id="actions">
                     <dl id="metadata">
                     </dl>
-                    <button>Add to Favorites</button>
-                    <button>Add to Watchlist</button>    
+                    <button id="btnFavorites">Add to Favorites</button>
+                    <button id="btnWatchlist">Add to Watchlist</button>    
                 </section>
             </header>
             <ul id="genres"></ul>
@@ -93,6 +93,65 @@
             </ul>
         </section>
     </template> 
+
+    <template id="template-register">
+        <section>
+            <h2>Register a New Account</h2>
+            <form onsubmit="app.register(event)">
+                <label for="register-name">Name</label>
+                <input id="register-name" type="text" placeholder="Name" required autocomplete="name">
+                
+                <label for="register-email">Email</label>
+                <input id="register-email" type="email" placeholder="Email" required autocomplete="email">
+                
+                <label for="register-password">Password</label>
+                <input id="register-password" type="password" placeholder="Password" required autocomplete="new-password">
+                
+                <label for="register-password-confirmation">Password Confirmation</label>
+                <input id="register-password-confirmation" type="password" required>
+                
+                <button type="submit">Register</button>
+                <p>Already have an account? <a href="/account/login">Log in</a></p>
+            </form>
+        </section>
+
+    </template>
+
+    <template id="template-login">
+        <section>
+            <h2>Login</h2>
+            <form onsubmit="app.login(event)">
+
+                <label for="login-email">Email</label>
+                <input id="login-email" type="email" placeholder="Email" required autocomplete="email">
+
+                <label for="login-password">Password</label>
+                <input id="login-password" type="password" placeholder="Password" required autocomplete="current-password">
+
+                <button type="submit">Login</button>
+                <p>Don't have an account? <a href="/account/register">Register</a></p>
+            </form>
+        </section>
+    </template>
+
+    <template id="template-account">
+        <section id="account">
+            <h2>You are logged in</h2>
+            <button onclick="app.logout()">Logout</button>
+            <button onclick="app.Router.go('/account/favorites')">Your Favorites</button>
+            <button onclick="app.Router.go('/account/watchlist')">Your Watchlist</button>
+        </section>
+    </template>
+
+        <template id="template-collection">
+        <section>
+            <ul id="movies-result">
+                <animated-loading data-elements="5"
+                    data-width="150px" data-height="220px">
+                </animated-loading> 
+            </ul>
+        </section>
+    </template>  
 
     <footer>
         <p>&copy; ReelingIt - Frontend Masters</p>
