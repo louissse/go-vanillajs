@@ -268,6 +268,42 @@ func (r *AccountRepository) SaveCollection(user models.User, movieID int, collec
 	return true, nil
 }
 
+func (r *AccountRepository) DeleteUser(email string) (bool, error) {
+
+	// Validate email input
+	if email == ""  {
+		r.logger.Error("DeleteUser failed: missing email", nil)
+		return false, errors.New("email is required")
+	}
+
+	// Check if user exists
+	var exists bool
+	err := r.db.QueryRow(`
+		SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)
+	`, email).Scan(&exists)
+	if err != nil {
+		r.logger.Error("Failed to check existing user", err)
+		return false, err
+	}
+	if !exists {
+		r.logger.Error("User not found with email: "+email, ErrUserNotFound)
+		return false, ErrUserNotFound
+	}
+
+	// Soft delete the user by setting time_deleted
+	query := `
+		UPDATE users
+		SET time_deleted = $1
+		WHERE email = $2 AND time_deleted IS NULL
+	`
+	_, err = r.db.Exec(query, time.Now(), email)
+	if err != nil {
+		r.logger.Error("Failed to delete user", err)
+		return false, err
+	}
+	return true, nil
+}
+
 var (
 	ErrRegistrationValidation   = errors.New("registration failed")
 	ErrAuthenticationValidation = errors.New("authentication failed")
